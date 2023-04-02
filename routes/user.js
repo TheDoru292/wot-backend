@@ -1,57 +1,64 @@
 const express = require("express");
 const router = express.Router();
-const { body, validationResult } = require("express-validator");
-const ErrorHandler = require("../lib/ErrorHandler");
-const bcrpyt = require("bcryptjs");
 require("dotenv").config();
 
-const User = require("../models/user");
+const passport = require("passport");
+require("../passport");
 
-router.post("/register", [
-  body("username").isLength({ min: 3, max: 255 }).trim().escape(),
-  body("handle").isLength({ min: 3, max: 45 }).trim(),
-  body("password").trim(),
-  body("profile_picture_url").trim(),
-  body("bio").trim().escape(),
+const User = require("../controllers/userController");
+const Tweet = require("../controllers/tweetController");
+const Follow = require("../controllers/followController");
+const Notification = require("../controllers/notificationController");
+const helper = require("../lib/helper");
 
-  (req, res, next) => {
-    const errors = validationResult(req);
+router.post(
+  "/register",
+  passport.authenticate("jwt", { session: false }),
+  User.register
+);
 
-    console.log(errors);
+router.get("/", User.getAll);
 
-    if (!errors.isEmpty()) {
-      const Error = new ErrorHandler(
-        null,
-        400,
-        "Check errors array",
-        errors.array()
-      );
-      return res.status(Error.errCode).json(Error.error);
-    }
+router.get(
+  "/:userHandle",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  User.getProfile
+);
 
-    const userObj = {
-      username: req.body.username,
-      handle: req.body.handle,
-      password: bcrpyt.hashSync(req.body.password, 10),
-      registered_on: new Date(),
-      profile_picture_url:
-        req.body.profile_picture_url || process.env.DEFAULT_PFP_LINK,
-      bio: req.body.bio || "",
-    };
+router.get(
+  "/:userHandle/tweets",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  Tweet.getAllUserTweets
+);
 
-    User.create(userObj)
-      .then((user) => {
-        console.log(user);
+router.get("/:userHandle/followers", helper.getUserHandle, Follow.getFollowers);
 
-        return res
-          .status(200)
-          .json({ success: true, status: "You can now log in!" });
-      })
-      .catch((err) => {
-        const Error = new ErrorHandler(err, 500);
-        return res.status(Error.errCode).json(Error.error);
-      });
-  },
-]);
+router.get("/:userHandle/following", helper.getUserHandle, Follow.getFollowing);
+
+router.post(
+  "/:userHandle/follow",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  helper.checkAlreadyFollowing,
+  Follow.follow
+);
+
+router.delete(
+  "/:userHandle/follow",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  helper.checkFollowing,
+  Follow.deleteFollow
+);
+
+router.get(
+  "/:userHandle/notifications",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  helper.checkSameUser,
+  Notification.get
+);
 
 module.exports = router;

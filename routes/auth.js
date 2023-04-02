@@ -27,8 +27,10 @@ router.post("/login", (req, res, next) => {
         bio: user.bio,
       };
 
-      const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-      return res.json({ success: true, userObj, token });
+      jwt.sign({ _id: user._id }, process.env.JWT_SECRET, (err, token) => {
+        res.cookie("token", token, { maxAge: 60 * 60 * 60 * 60 });
+        return res.json({ success: true, user: userObj, token });
+      });
     });
   })(req, res);
 });

@@ -10,6 +10,9 @@ db.on("error", console.error.bind(console, "mongo connection error"));
 
 const authRouter = require("./auth");
 const userRouter = require("./user");
+const tweetRouter = require("./tweet");
+const bookmarkRouter = require("./bookmark");
+const tagRouter = require("./tag");
 
 router.get("/", (req, res, next) => {
   res.json({ message: "Hi" });
@@ -18,5 +21,11 @@ router.get("/", (req, res, next) => {
 router.use("/auth", authRouter);
 
 router.use("/user", userRouter);
+
+router.use("/tweet", tweetRouter);
+
+router.use("/bookmark", bookmarkRouter);
+
+router.use("/tag", tagRouter);
 
 module.exports = router;
