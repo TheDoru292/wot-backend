@@ -7,6 +7,7 @@ const UserSchema = new Schema({
   password: { type: String, required: true },
   registered_on: { type: Date, required: true },
   profile_picture_url: { type: String, required: true },
+  cover_url: { type: String, required: true },
   verifiedCheckmark: { type: Boolean, default: false },
   verified: { type: Boolean, default: false },
   bio: { type: String },
