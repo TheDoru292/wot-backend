@@ -5,6 +5,7 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
+const cors = require("cors");
 
 const app = express();
 
@@ -13,10 +14,17 @@ app.set("port", port);
 
 const indexRouter = require("./routes/index");
 
+const corsOptions = {
+  origin: "http://localhost:3002",
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(cors(corsOptions));
 
 app.use("/api", indexRouter);
 
