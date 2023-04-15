@@ -10,6 +10,8 @@ const bookmark = require("../models/bookmark");
 const follow = require("../models/follow");
 
 exports.get = (req, res) => {
+  console.log("test", req.params.tweetId);
+
   async.parallel(
     {
       tweet: function (cb) {
@@ -240,30 +242,22 @@ exports.getAll = (req, res) => {
           },
           (err, results) => {
             if (err) {
-              const Error = new ErrorHandler(err, 500);
-              return res.status(Error.errCode).json(Error.error);
+              callback(err);
             }
 
             follow.findOne(
               { following: results.tweet.user, follower: req.user._id },
               (err, follow) => {
                 if (err) {
-                  const Error = new ErrorHandler(err, 500);
-                  return res.status(Error.errCode).json(Error.error);
+                  callback(err);
                 }
 
                 const obj = {
                   tweet: results.tweet,
-                  likes: {
-                    count: results.likes,
-                  },
+                  likes: results.likes,
                   liked: results.like == null ? false : true,
-                  comments: {
-                    count: results.comments,
-                  },
-                  retweets: {
-                    count: results.retweets,
-                  },
+                  comments: results.comments,
+                  retweets: results.retweets,
                   retweeted: results.retweet == null ? false : true,
                   bookmarked: results.bookmark == null ? false : true,
                   following: follow ? true : false,
@@ -407,16 +401,10 @@ exports.getAllUserTweets = (req, res) => {
 
               const obj = {
                 tweet: results.tweet,
-                likes: {
-                  count: results.likes,
-                },
+                likes: results.likes,
                 liked: results.like == null ? false : true,
-                comments: {
-                  count: results.comments,
-                },
-                retweets: {
-                  count: results.retweets,
-                },
+                comments: results.comments,
+                retweets: results.retweets,
                 retweeted: results.retweet == null ? false : true,
                 bookmarked: results.bookmark == null ? false : true,
               };
@@ -452,7 +440,7 @@ exports.getAllUserTweets = (req, res) => {
 };
 
 exports.post = [
-  body("content").isLength({ min: 3, max: 280 }),
+  body("content").trim(),
 
   (req, res, next) => {
     const errors = validationResult(req);
@@ -467,33 +455,37 @@ exports.post = [
       return res.status(Error.errCode).json(Error.error);
     }
 
-    Tweet.create(
-      { user: req.user._id, content: req.body.content, posted_on: new Date() },
-      (err, tweet) => {
-        if (err) {
-          const Error = new ErrorHandler(err, 500);
-          return res.status(Error.errCode).json(Error.error);
-        }
+    const tweetObj = {
+      user: req.user._id,
+      content: req.body.content,
+      posted_on: new Date(),
+      giphyUrl: req.body.giphyUrl || null,
+    };
 
-        setTimeout(() => {
-          const regex = /#[A-Za-z]+/g;
-
-          let array = req.body.content.match(regex);
-
-          async.forEach(array, (document, callback) => {
-            tag.create({ tweet: tweet._id, tag: document }, (err, tag) => {
-              if (err) {
-                console.log(err);
-              }
-
-              console.log("tag added to database:", document);
-            });
-          });
-        }, 1000);
-
-        return res.status(200).json({ success: true, tweet });
+    Tweet.create(tweetObj, (err, tweet) => {
+      if (err) {
+        const Error = new ErrorHandler(err, 500);
+        return res.status(Error.errCode).json(Error.error);
       }
-    );
+
+      setTimeout(() => {
+        const regex = /#[A-Za-z]+/g;
+
+        let array = req.body.content.match(regex);
+
+        async.forEach(array, (document, callback) => {
+          tag.create({ tweet: tweet._id, tag: document }, (err, tag) => {
+            if (err) {
+              console.log(err);
+            }
+
+            console.log("tag added to database:", document);
+          });
+        });
+      }, 1000);
+
+      return res.status(200).json({ success: true, tweet });
+    });
   },
 ];
 
@@ -539,4 +531,336 @@ exports.delete = (req, res, next) => {
 
     return res.status(200).json({ success: true, status: "Tweet deleted." });
   });
+};
+
+exports.getFollowingTweets = (req, res, next) => {
+  const { page = 1 } = req.query;
+
+  follow.find(
+    { follower: req.user._id },
+    "following -_id",
+    (err, following) => {
+      if (err) {
+        const Error = new ErrorHandler(err, 500);
+        return res.status(Error.errCode).json(Error.error);
+      }
+
+      const array = [];
+
+      following.map((item) => {
+        array.push(item.following.toString());
+      });
+
+      Tweet.paginate(
+        { user: { $in: array } },
+        {
+          page,
+          limit: 10,
+          select: "_id",
+        },
+        (err, tweets) => {
+          if (err) {
+            const Error = new ErrorHandler(err, 500);
+            return res.status(Error.errCode).json(Error.error);
+          }
+
+          const array = [];
+
+          async.each(
+            tweets.docs,
+            (tweet, callback) => {
+              async.parallel(
+                {
+                  tweet: function (cb) {
+                    Tweet.findOne({ _id: tweet._id })
+                      .populate("user", "-password")
+                      .exec((err, tweet) => {
+                        if (err) {
+                          cb(err);
+                        }
+
+                        cb(null, tweet);
+                      });
+                  },
+                  likes: function (cb) {
+                    like.countDocuments({ tweet: tweet._id }, (err, likes) => {
+                      if (err) {
+                        cb(err);
+                      }
+
+                      cb(null, likes);
+                    });
+                  },
+                  like: function (cb) {
+                    like.findOne(
+                      { tweet: tweet._id, user: req.user._id },
+                      (err, like) => {
+                        if (err) {
+                          cb(err);
+                        }
+
+                        cb(null, like);
+                      }
+                    );
+                  },
+                  comments: function (cb) {
+                    comment.countDocuments(
+                      { tweet: tweet._id },
+                      (err, comments) => {
+                        if (err) {
+                          cb(err);
+                        }
+
+                        cb(null, comments);
+                      }
+                    );
+                  },
+                  retweets: function (cb) {
+                    retweet.countDocuments(
+                      { retweetedPost: tweet._id },
+                      (err, retweets) => {
+                        if (err) {
+                          cb(err);
+                        }
+
+                        cb(null, retweets);
+                      }
+                    );
+                  },
+                  retweet: function (cb) {
+                    retweet.findOne(
+                      { retweetedPost: tweet._id, user: req.user._id },
+                      (err, retweet) => {
+                        if (err) {
+                          cb(err);
+                        }
+
+                        cb(null, retweet);
+                      }
+                    );
+                  },
+                  bookmark: function (cb) {
+                    bookmark.findOne(
+                      { user: req.user._id, tweet: tweet._id },
+                      (err, bookmark) => {
+                        if (err) {
+                          cb(err);
+                        }
+
+                        cb(null, bookmark);
+                      }
+                    );
+                  },
+                },
+                (err, results) => {
+                  if (err) {
+                    const Error = new ErrorHandler(err, 500);
+                    return res.status(Error.errCode).json(Error.error);
+                  }
+
+                  follow.findOne(
+                    { following: results.tweet.user, follower: req.user._id },
+                    (err, follow) => {
+                      if (err) {
+                        const Error = new ErrorHandler(err, 500);
+                        return res.status(Error.errCode).json(Error.error);
+                      }
+
+                      const obj = {
+                        tweet: results.tweet,
+                        likes: results.likes,
+                        liked: results.like == null ? false : true,
+                        comments: results.comments,
+                        retweets: results.retweets,
+                        retweeted: results.retweet == null ? false : true,
+                        bookmarked: results.bookmark == null ? false : true,
+                        following: follow ? true : false,
+                      };
+
+                      array.push(obj);
+                      callback();
+                    }
+                  );
+                }
+              );
+            },
+            (err) => {
+              if (err) {
+                const Error = new ErrorHandler(err, 500);
+                return res.status(Error.errCode).json(Error.error);
+              }
+              return res.json({
+                success: true,
+                tweets: array,
+                pages: {
+                  totalPages: tweets.totalPages,
+                  page: tweets.page,
+                  pagingCounter: tweets.pagingCounter,
+                  hasPrevPage: tweets.hasPrevPage,
+                  hasNextPage: tweets.hasNextPage,
+                  prevPage: tweets.prevPage,
+                  nextPage: tweets.nextPage,
+                },
+              });
+            }
+          );
+        }
+      );
+    }
+  );
+};
+
+exports.getUserLikedTweets = (req, res, next) => {
+  const { page = 1 } = req.query;
+
+  like.paginate(
+    { user: req.userId, tweet: { $exists: true } },
+    { page, limit: 10 },
+    (err, likedTweets) => {
+      if (err) {
+        const Error = new ErrorHandler(err, 500);
+        return res.status(Error.errCode).json(Error.error);
+      }
+
+      const array = [];
+
+      async.each(
+        likedTweets.docs,
+        (document, callback) => {
+          async.parallel(
+            {
+              tweet: function (cb) {
+                Tweet.findOne({ _id: document.tweet })
+                  .populate("user", "-password")
+                  .exec((err, tweet) => {
+                    if (err) {
+                      cb(err);
+                    }
+
+                    cb(null, tweet);
+                  });
+              },
+              likes: function (cb) {
+                like.countDocuments({ tweet: document.tweet }, (err, likes) => {
+                  if (err) {
+                    cb(err);
+                  }
+
+                  cb(null, likes);
+                });
+              },
+              like: function (cb) {
+                like.findOne(
+                  { tweet: document.tweet, user: req.user._id },
+                  (err, like) => {
+                    if (err) {
+                      cb(err);
+                    }
+
+                    cb(null, like);
+                  }
+                );
+              },
+              comments: function (cb) {
+                comment.countDocuments(
+                  { tweet: document.tweet },
+                  (err, comments) => {
+                    if (err) {
+                      cb(err);
+                    }
+
+                    cb(null, comments);
+                  }
+                );
+              },
+              retweets: function (cb) {
+                retweet.countDocuments(
+                  { retweetedPost: document.tweet },
+                  (err, retweets) => {
+                    if (err) {
+                      cb(err);
+                    }
+
+                    cb(null, retweets);
+                  }
+                );
+              },
+              retweet: function (cb) {
+                retweet.findOne(
+                  { retweetedPost: document.tweet, user: req.user._id },
+                  (err, retweet) => {
+                    if (err) {
+                      cb(err);
+                    }
+
+                    cb(null, retweet);
+                  }
+                );
+              },
+              bookmark: function (cb) {
+                bookmark.findOne(
+                  { user: req.user._id, tweet: document.tweet },
+                  (err, bookmark) => {
+                    if (err) {
+                      cb(err);
+                    }
+
+                    cb(null, bookmark);
+                  }
+                );
+              },
+            },
+            (err, results) => {
+              if (err) {
+                callback(err);
+              }
+
+              follow.findOne(
+                { following: results.tweet.user, follower: req.user._id },
+                (err, follow) => {
+                  if (err) {
+                    callback(err);
+                  }
+
+                  const obj = {
+                    tweet: results.tweet,
+                    likes: results.likes,
+                    liked: results.like == null ? false : true,
+                    comments: results.comments,
+                    retweets: results.retweets,
+                    retweeted: results.retweet == null ? false : true,
+                    bookmarked: results.bookmark == null ? false : true,
+                    following: follow ? true : false,
+                  };
+
+                  array.push(obj);
+                  callback();
+                }
+              );
+            }
+          );
+        },
+        (err) => {
+          if (err) {
+            const Error = new ErrorHandler(err, 500);
+            return res.status(Error.errCode).json(Error.error);
+          }
+
+          return res.status(200).json({
+            success: true,
+            tweets: array,
+            pages: {
+              totalPages: likedTweets.totalPages,
+              page: likedTweets.page,
+              pagingCounter: likedTweets.pagingCounter,
+              hasPrevPage: likedTweets.hasPrevPage,
+              hasNextPage: likedTweets.hasNextPage,
+              prevPage: likedTweets.prevPage,
+              nextPage: likedTweets.nextPage,
+            },
+          });
+        }
+      );
+    }
+  );
 };
