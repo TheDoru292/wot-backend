@@ -6,8 +6,7 @@ const TweetSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   content: String,
   posted_on: Date,
-  retweet: { type: Boolean },
-  retweetedPost: { type: Schema.Types.ObjectId, ref: "Tweet" },
+  giphyUrl: String,
 });
 
 TweetSchema.plugin(paginate);
