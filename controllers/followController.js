@@ -1,6 +1,7 @@
 const Follow = require("../models/follow");
 const ErrorHandler = require("../lib/ErrorHandler");
 const Notification = require("../models/notification");
+const async = require("async");
 
 exports.follow = (req, res, next) => {
   Follow.create(
@@ -47,32 +48,81 @@ exports.deleteFollow = (req, res, next) => {
 
 exports.getFollowers = (req, res, next) => {
   Follow.find({ following: req.userId })
-    .populate(
-      "follower",
-      "username handle profile_picture_url verifiedCheckmark bio"
-    )
+    .populate("follower", "-password")
     .exec((err, followers) => {
       if (err) {
         const Error = new ErrorHandler(err, 500);
         return res.status(Error.errCode).json(Error.error);
       }
 
-      return res.status(200).json({ success: true, followers });
+      const array = [];
+
+      async.each(
+        followers,
+        (follower, callback) => {
+          console.log(follower);
+          console.log(follower.follower._id);
+
+          Follow.findOne(
+            { following: follower.follower._id, follower: req.user._id },
+            (err, follow) => {
+              if (err) {
+                callback(err);
+              }
+
+              array.push({ user: follower, following: follow ? true : false });
+              callback();
+            }
+          );
+        },
+        (err) => {
+          if (err) {
+            const Error = new ErrorHandler(err, 500);
+            return res.status(Error.errCode).json(Error.error);
+          }
+
+          return res.status(200).json({ success: true, followers: array });
+        }
+      );
     });
 };
 
 exports.getFollowing = (req, res, next) => {
   Follow.find({ follower: req.userId })
-    .populate(
-      "following",
-      "username handle profile_picture_url verifiedCheckmark bio"
-    )
+    .populate("following", "-password")
     .exec((err, following) => {
       if (err) {
         const Error = new ErrorHandler(err, 500);
         return res.status(Error.errCode).json(Error.error);
       }
 
-      return res.status(200).json({ success: true, following });
+      const array = [];
+
+      async.each(
+        following,
+        (follower, callback) => {
+          const { id } = follower.following;
+
+          Follow.findOne(
+            { following: id, follower: req.user._id },
+            (err, follow) => {
+              if (err) {
+                callback(err);
+              }
+
+              array.push({ user: follower, following: follow ? true : false });
+              callback();
+            }
+          );
+        },
+        (err) => {
+          if (err) {
+            const Error = new ErrorHandler(err, 500);
+            return res.status(Error.errCode).json(Error.error);
+          }
+
+          return res.status(200).json({ success: true, following: array });
+        }
+      );
     });
 };
