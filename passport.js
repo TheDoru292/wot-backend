@@ -10,9 +10,9 @@ const User = require("./models/user");
 
 passport.use(
   new LocalStrategy(
-    { usernameField: "username", passwordField: "password" },
-    function (username, password, cb) {
-      return User.findOne({ username }, (err, user) => {
+    { usernameField: "handle", passwordField: "password" },
+    function (handle, password, cb) {
+      return User.findOne({ handle }, (err, user) => {
         if (err) {
           return cb(err);
         }
@@ -44,8 +44,10 @@ passport.use(
       jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
       secretOrKey: process.env.JWT_SECRET,
     },
-    (jwtPayload, cb) => {
-      return User.findOneById(jwtPayload._id, (err, user) => {
+    function (jwtPayload, cb) {
+      console.log(jwtPayload);
+
+      return User.findOne({ _id: jwtPayload._id }, "_id", (err, user) => {
         if (err) {
           return cb(err);
         }
