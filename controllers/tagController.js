@@ -25,3 +25,28 @@ exports.getPopular = (req, res, next) => {
     }
   );
 };
+
+exports.getTags = (req, res) => {
+  tag.aggregate(
+    [
+      {
+        $group: { _id: "$tag", number: { $sum: 1 } },
+      },
+      {
+        $sort: { number: -1 },
+      },
+      {
+        $limit: 20,
+      },
+    ],
+    {},
+    (err, tags) => {
+      if (err) {
+        const Error = new ErrorHandler(err, 500);
+        return res.status(Error.errCode).json(Error.error);
+      }
+
+      return res.status(200).json({ success: true, tags });
+    }
+  );
+};

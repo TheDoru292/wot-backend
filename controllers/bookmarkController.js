@@ -102,16 +102,10 @@ exports.get = (req, res, next) => {
 
             const obj = {
               tweet: results.tweet,
-              likes: {
-                count: results.likes,
-              },
+              likes: results.likes,
               liked: results.like == null ? false : true,
-              comments: {
-                count: results.comments,
-              },
-              retweets: {
-                count: results.retweets,
-              },
+              comments: results.comments,
+              retweets: results.retweets,
               retweeted: results.retweet == null ? false : true,
               bookmarked: true,
             };

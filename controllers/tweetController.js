@@ -8,6 +8,8 @@ const tag = require("../models/tag");
 const retweet = require("../models/retweet");
 const bookmark = require("../models/bookmark");
 const follow = require("../models/follow");
+const mongoose = require("mongoose");
+const notification = require("../models/notification");
 
 exports.get = (req, res) => {
   console.log("test", req.params.tweetId);
@@ -522,15 +524,32 @@ exports.edit = [
   },
 ];
 
-exports.delete = (req, res, next) => {
-  Tweet.findOneAndDelete({ _id: req.params.tweetId }, (err, tweet) => {
-    if (err) {
-      const Error = new ErrorHandler(err, 500);
-      return res.status(Error.errCode).json(Error.error);
-    }
+exports.delete = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    return res.status(200).json({ success: true, status: "Tweet deleted." });
-  });
+  try {
+    await Tweet.findOneAndDelete({ _id: req.params.tweetId }, { session });
+    await bookmark.deleteMany({ tweet: req.params.tweetId }, { session });
+    await comment.deleteMany({ tweet: req.params.tweetId }, { session });
+    await like.deleteMany({ tweet: req.params.tweetId }, { session });
+    await retweet.deleteMany(
+      { retweetedPost: req.params.tweetId },
+      { session }
+    );
+    await tag.deleteMany({ tweet: req.params.tweetId }, { session });
+    await session.commitTransaction();
+  } catch (err) {
+    console.error(err);
+    res
+      .status(500)
+      .json({ success: false, status: "Deleting tweet failed." })
+      .end();
+    await session.abortTransaction();
+  } finally {
+    res.status(200).json({ success: true, status: "Deleted tweet." }).end();
+    session.endSession();
+  }
 };
 
 exports.getFollowingTweets = (req, res, next) => {
