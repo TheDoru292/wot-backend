@@ -15,6 +15,7 @@ router.get("/", passport.authenticate("jwt", { session: false }), Tweet.getAll);
 router.get(
   "/:tweetId",
   passport.authenticate("jwt", { session: false }),
+  helper.checkId,
   Tweet.get
 );
 
@@ -34,7 +35,11 @@ router.put(
   Tweet.edit
 );
 
-router.get("/:tweetId/comment", Comment.getTweetAllComments);
+router.get(
+  "/:tweetId/comment",
+  passport.authenticate("jwt", { session: false }),
+  Comment.getTweetAllComments
+);
 
 router.get("/:tweetId/comment/:commentId", Comment.get);
 

@@ -8,14 +8,11 @@ require("../passport");
 const User = require("../controllers/userController");
 const Tweet = require("../controllers/tweetController");
 const Follow = require("../controllers/followController");
+const Comment = require("../controllers/commentController");
 const Notification = require("../controllers/notificationController");
 const helper = require("../lib/helper");
 
-router.post(
-  "/register",
-  passport.authenticate("jwt", { session: false }),
-  User.register
-);
+router.post("/register", User.register);
 
 router.get("/", User.getAll);
 
@@ -26,6 +23,14 @@ router.get(
   User.getProfile
 );
 
+router.put(
+  "/:userHandle",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  helper.checkSameUser,
+  User.editProfile
+);
+
 router.get(
   "/:userHandle/tweets",
   passport.authenticate("jwt", { session: false }),
@@ -33,9 +38,41 @@ router.get(
   Tweet.getAllUserTweets
 );
 
-router.get("/:userHandle/followers", helper.getUserHandle, Follow.getFollowers);
+router.get(
+  "/:userHandle/tweets/liked",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  Tweet.getUserLikedTweets
+);
 
-router.get("/:userHandle/following", helper.getUserHandle, Follow.getFollowing);
+router.get(
+  "/:userHandle/comments",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  Comment.getUsersAllComments
+);
+
+router.get(
+  "/:userHandle/followers",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  Follow.getFollowers
+);
+
+router.get(
+  "/:userHandle/following",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  Follow.getFollowing
+);
+
+router.get(
+  "/:userHandle/following/tweet",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  helper.checkSameUser,
+  Tweet.getFollowingTweets
+);
 
 router.post(
   "/:userHandle/follow",
@@ -59,6 +96,14 @@ router.get(
   helper.getUserHandle,
   helper.checkSameUser,
   Notification.get
+);
+
+router.get(
+  "/:userHandle/connect",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  helper.checkSameUser,
+  User.connect
 );
 
 module.exports = router;
