@@ -10,6 +10,7 @@ const NotificationSchema = new Schema({
   action: { type: String },
   user: { type: Schema.Types.ObjectId, ref: "User" },
   tweet: { type: Schema.Types.ObjectId, ref: "Tweet" },
+  comment: { type: Schema.Types.ObjectId, ref: "Comment" },
   date: { type: Date, default: new Date() },
 });
 
