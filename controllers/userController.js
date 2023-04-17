@@ -199,16 +199,20 @@ exports.getProfile = (req, res, next) => {
         });
       },
       userFollowing: function (cb) {
-        follow.findOne(
-          { following: req.userId, follower: req.user._id },
-          (err, follow) => {
-            if (err) {
-              cb(err);
-            }
+        if (req.user) {
+          follow.findOne(
+            { following: req.userId, follower: req.user._id },
+            (err, follow) => {
+              if (err) {
+                cb(err);
+              }
 
-            cb(null, follow);
-          }
-        );
+              cb(null, follow);
+            }
+          );
+        } else {
+          cb(null, null);
+        }
       },
     },
     (err, results) => {

@@ -94,16 +94,20 @@ exports.getLikes = (req, res, next) => {
               );
             },
             following: function (cb) {
-              follow.findOne(
-                { following: document.user, follower: req.user._id },
-                (err, follow) => {
-                  if (err) {
-                    cb(err);
-                  }
+              if (req.user) {
+                follow.findOne(
+                  { following: document.user, follower: req.user._id },
+                  (err, follow) => {
+                    if (err) {
+                      cb(err);
+                    }
 
-                  cb(null, follow);
-                }
-              );
+                    cb(null, follow);
+                  }
+                );
+              } else {
+                cb(null, null);
+              }
             },
           },
           (err, results) => {

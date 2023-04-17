@@ -10,11 +10,15 @@ const retweet = require("../controllers/retweetController");
 const Like = require("../controllers/likeController");
 const helper = require("../lib/helper");
 
-router.get("/", passport.authenticate("jwt", { session: false }), Tweet.getAll);
+router.get(
+  "/",
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
+  Tweet.getAll
+);
 
 router.get(
   "/:tweetId",
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
   helper.checkId,
   Tweet.get
 );
@@ -37,11 +41,9 @@ router.put(
 
 router.get(
   "/:tweetId/comment",
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
   Comment.getTweetAllComments
 );
-
-router.get("/:tweetId/comment/:commentId", Comment.get);
 
 router.post(
   "/:tweetId/comment",
@@ -88,7 +90,7 @@ router.delete(
 
 router.get(
   "/:tweetId/like",
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
   helper.checkTweetExists,
   Like.getLikes
 );
@@ -102,7 +104,7 @@ router.post(
 
 router.get(
   "/:tweetId/retweet",
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
   retweet.getRetweets
 );
 

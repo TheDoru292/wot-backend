@@ -4,6 +4,7 @@ const LocalStrategy = require("passport-local").Strategy;
 const JWTStrategy = passportJWT.Strategy;
 const ExtractJWT = passportJWT.ExtractJwt;
 const bcrpyt = require("bcryptjs");
+const AnonymousStrategy = require("passport-anonymous");
 require("dotenv").config();
 
 const User = require("./models/user");
@@ -57,3 +58,5 @@ passport.use(
     }
   )
 );
+
+passport.use(new AnonymousStrategy());

@@ -35,28 +35,36 @@ exports.getTweetAllComments = (req, res, next) => {
                 });
               },
               like: function (cb) {
-                like.findOne(
-                  { user: req.user._id, comment: comment._id },
-                  (err, like) => {
-                    if (err) {
-                      cb(err);
-                    }
+                if (req.user) {
+                  like.findOne(
+                    { user: req.user._id, comment: comment._id },
+                    (err, like) => {
+                      if (err) {
+                        cb(err);
+                      }
 
-                    cb(null, like);
-                  }
-                );
+                      cb(null, like);
+                    }
+                  );
+                } else {
+                  cb(null, null);
+                }
               },
               follow: function (cb) {
-                follow.findOne(
-                  { following: comment.user, follower: req.user._id },
-                  (err, follow) => {
-                    if (err) {
-                      cb(err);
-                    }
+                if (req.user) {
+                  follow.findOne(
+                    { following: comment.user, follower: req.user._id },
+                    (err, follow) => {
+                      if (err) {
+                        cb(err);
+                      }
 
-                    cb(null, follow);
-                  }
-                );
+                      cb(null, follow);
+                    }
+                  );
+                } else {
+                  cb(null, null);
+                }
               },
             },
             (err, results) => {
@@ -67,8 +75,8 @@ exports.getTweetAllComments = (req, res, next) => {
               array.push({
                 comment: comment,
                 likes: { count: results.likes },
-                like: results.like == null ? false : true,
-                following: follow ? true : false,
+                like: results.like ? true : false,
+                following: results.follow ? true : false,
               });
 
               callback();
@@ -151,16 +159,20 @@ exports.getUsersAllComments = (req, res, next) => {
                 });
               },
               tweetLike: function (cb) {
-                like.findOne(
-                  { tweet: comment.tweet, user: req.user._id },
-                  (err, like) => {
-                    if (err) {
-                      cb(err);
-                    }
+                if (req.user) {
+                  like.findOne(
+                    { tweet: comment.tweet, user: req.user._id },
+                    (err, like) => {
+                      if (err) {
+                        cb(err);
+                      }
 
-                    cb(null, like);
-                  }
-                );
+                      cb(null, like);
+                    }
+                  );
+                } else {
+                  cb(null, null);
+                }
               },
               tweetReplies: function (cb) {
                 Comment.countDocuments(
@@ -187,28 +199,36 @@ exports.getUsersAllComments = (req, res, next) => {
                 );
               },
               tweetRetweet: function (cb) {
-                retweet.findOne(
-                  { user: req.user._id, retweetedPost: comment.tweet },
-                  (err, retweet) => {
-                    if (err) {
-                      cb(err);
-                    }
+                if (req.user) {
+                  retweet.findOne(
+                    { user: req.user._id, retweetedPost: comment.tweet },
+                    (err, retweet) => {
+                      if (err) {
+                        cb(err);
+                      }
 
-                    cb(null, retweet);
-                  }
-                );
+                      cb(null, retweet);
+                    }
+                  );
+                } else {
+                  cb(null, null);
+                }
               },
               tweetBookmark: function (cb) {
-                bookmark.findOne(
-                  { user: req.user._id, tweet: comment.tweet },
-                  (err, bookmark) => {
-                    if (err) {
-                      cb(err);
-                    }
+                if (req.user) {
+                  bookmark.findOne(
+                    { user: req.user._id, tweet: comment.tweet },
+                    (err, bookmark) => {
+                      if (err) {
+                        cb(err);
+                      }
 
-                    cb(null, bookmark);
-                  }
-                );
+                      cb(null, bookmark);
+                    }
+                  );
+                } else {
+                  cb(null, null);
+                }
               },
               replyLikes: function (cb) {
                 like.countDocuments({ comment: comment._id }, (err, likes) => {
@@ -220,28 +240,36 @@ exports.getUsersAllComments = (req, res, next) => {
                 });
               },
               replyLike: function (cb) {
-                like.findOne(
-                  { comment: comment._id, user: req.user._id },
-                  (err, like) => {
-                    if (err) {
-                      cb(err);
-                    }
+                if (req.user) {
+                  like.findOne(
+                    { comment: comment._id, user: req.user._id },
+                    (err, like) => {
+                      if (err) {
+                        cb(err);
+                      }
 
-                    cb(null, like);
-                  }
-                );
+                      cb(null, like);
+                    }
+                  );
+                } else {
+                  cb(null, null);
+                }
               },
               replyFollow: function (cb) {
-                follow.findOne(
-                  { following: comment.user, follower: req.user._id },
-                  (err, follow) => {
-                    if (err) {
-                      cb(err);
-                    }
+                if (req.user) {
+                  follow.findOne(
+                    { following: comment.user, follower: req.user._id },
+                    (err, follow) => {
+                      if (err) {
+                        cb(err);
+                      }
 
-                    cb(null, follow);
-                  }
-                );
+                      cb(null, follow);
+                    }
+                  );
+                } else {
+                  cb(null, null);
+                }
               },
             },
             (err, results) => {
@@ -249,35 +277,51 @@ exports.getUsersAllComments = (req, res, next) => {
                 callback(err);
               }
 
-              follow.findOne(
-                { following: results.tweet.user._id, follower: req.user._id },
-                (err, follow) => {
-                  if (err) {
-                    callback(err);
+              if (req.user) {
+                follow.findOne(
+                  { following: results.tweet.user._id, follower: req.user._id },
+                  (err, follow) => {
+                    if (err) {
+                      callback(err);
+                    }
+
+                    array.push({
+                      tweet: results.tweet,
+                      comment: comment,
+                      tweetStats: {
+                        likes: results.tweetLikes,
+                        liked: results.tweetLike ? true : false,
+                        replies: results.tweetReplies,
+                        retweets: results.tweetRetweets,
+                        retweeted: results.tweetRetweet ? true : false,
+                        bookmark: results.tweetBookmark ? true : false,
+                        following: follow ? true : false,
+                      },
+                      commentStats: {
+                        likes: results.replyLikes,
+                        liked: results.replyLike ? true : false,
+                        following: results.replyFollow ? true : false,
+                      },
+                    });
+
+                    callback();
                   }
-
-                  array.push({
-                    tweet: results.tweet,
-                    comment: comment,
-                    tweetStats: {
-                      likes: results.tweetLikes,
-                      liked: results.tweetLike ? true : false,
-                      replies: results.tweetReplies,
-                      retweets: results.tweetRetweets,
-                      retweeted: results.tweetRetweet ? true : false,
-                      bookmark: results.tweetBookmark ? true : false,
-                      following: follow ? true : false,
-                    },
-                    commentStats: {
-                      likes: results.replyLikes,
-                      liked: results.replyLike ? true : false,
-                      following: results.replyFollow ? true : false,
-                    },
-                  });
-
-                  callback();
-                }
-              );
+                );
+              } else {
+                array.push({
+                  tweet: results.tweet,
+                  comment: comment,
+                  tweetStats: {
+                    likes: results.tweetLikes,
+                    replies: results.tweetReplies,
+                    retweets: results.tweetRetweets,
+                  },
+                  commentStats: {
+                    likes: results.replyLikes,
+                  },
+                });
+                callback();
+              }
             }
           );
         },

@@ -18,7 +18,7 @@ router.get("/", User.getAll);
 
 router.get(
   "/:userHandle",
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
   helper.getUserHandle,
   User.getProfile
 );
@@ -33,21 +33,21 @@ router.put(
 
 router.get(
   "/:userHandle/tweets",
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
   helper.getUserHandle,
   Tweet.getAllUserTweets
 );
 
 router.get(
   "/:userHandle/tweets/liked",
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
   helper.getUserHandle,
   Tweet.getUserLikedTweets
 );
 
 router.get(
   "/:userHandle/comments",
-  passport.authenticate("jwt", { session: false }),
+  passport.authenticate(["jwt", "anonymous"], { session: false }),
   helper.getUserHandle,
   Comment.getUsersAllComments
 );
