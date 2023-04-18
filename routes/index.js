@@ -13,6 +13,7 @@ const userRouter = require("./user");
 const tweetRouter = require("./tweet");
 const bookmarkRouter = require("./bookmark");
 const tagRouter = require("./tag");
+const searchRouter = require("./search");
 
 router.get("/", (req, res, next) => {
   res.json({ message: "Hi" });
@@ -27,5 +28,7 @@ router.use("/tweet", tweetRouter);
 router.use("/bookmark", bookmarkRouter);
 
 router.use("/tag", tagRouter);
+
+router.get("/search", searchRouter);
 
 module.exports = router;
