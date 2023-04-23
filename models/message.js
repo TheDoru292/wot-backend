@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 const Schema = mongoose.Schema;
 
 const MessageSchema = new Schema({
@@ -8,9 +9,11 @@ const MessageSchema = new Schema({
     required: true,
   },
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  message: { type: String },
-  messaged_on: { type: Date },
+  message: { type: String, required: true },
+  timestamp: { type: Date, required: true },
   deleted: { type: Boolean, default: false },
 });
+
+MessageSchema.plugin(aggregatePaginate);
 
 module.exports = mongoose.model("Message", MessageSchema);
