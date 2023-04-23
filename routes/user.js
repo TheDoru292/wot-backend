@@ -10,6 +10,7 @@ const Tweet = require("../controllers/tweetController");
 const Follow = require("../controllers/followController");
 const Comment = require("../controllers/commentController");
 const Notification = require("../controllers/notificationController");
+const Conversation = require("../controllers/conversationController");
 const helper = require("../lib/helper");
 
 router.post("/register", User.register);
@@ -104,6 +105,23 @@ router.get(
   helper.getUserHandle,
   helper.checkSameUser,
   User.connect
+);
+
+router.get(
+  "/:userHandle/conversation",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  helper.checkSameUser,
+  Conversation.getUserConversations
+);
+
+router.post(
+  "/:userHandle/conversation",
+  passport.authenticate("jwt", { session: false }),
+  helper.getUserHandle,
+  helper.checkSameUserConversation,
+  helper.checkConversationExists,
+  Conversation.startConversation
 );
 
 module.exports = router;

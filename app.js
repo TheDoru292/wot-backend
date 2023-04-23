@@ -6,6 +6,7 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const cors = require("cors");
+const { Server } = require("socket.io");
 
 const app = express();
 
@@ -43,6 +44,35 @@ app.use(function (err, req, res, next) {
 });
 
 const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "http://localhost:3002", credentials: true },
+});
+
+io.sockets.on("connection", (socket) => {
+  socket.on("join", (room) => {
+    socket.join(room);
+
+    const clients = io.sockets.adapter.rooms.get(room);
+
+    console.log("users ", clients);
+
+    console.log(`${socket.id} joined ${room}`);
+  });
+});
+
+const Messages = require("./models/message");
+
+Messages.watch().on("change", (data) => {
+  if (data.operationType == "insert") {
+    delete data.fullDocument.__v;
+    console.log(data.fullDocument.conversation.toString());
+
+    io.to(data.fullDocument.conversation.toString()).emit(
+      "new-message",
+      data.fullDocument
+    );
+  }
+});
 
 server.listen(port);
 server.on("error", onError);
