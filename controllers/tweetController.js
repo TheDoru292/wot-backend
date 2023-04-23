@@ -418,12 +418,14 @@ exports.getAllUserTweets = (req, res) => {
               },
               retweet: function (cb) {
                 if (req.user) {
-                  retweet.find(
+                  retweet.findOne(
                     { retweetedPost: document._id, user: req.user._id },
                     (err, retweet) => {
                       if (err) {
                         cb(err);
                       }
+
+                      console.log(retweet);
 
                       cb(null, retweet);
                     }
@@ -458,11 +460,11 @@ exports.getAllUserTweets = (req, res) => {
               const obj = {
                 tweet: results.tweet,
                 likes: results.likes,
-                liked: results.like == null ? false : true,
+                liked: results.like ? true : false,
                 comments: results.comments,
                 retweets: results.retweets,
-                retweeted: results.retweet == null ? false : true,
-                bookmarked: results.bookmark == null ? false : true,
+                retweeted: results.retweet ? true : false,
+                bookmarked: results.bookmark ? true : false,
               };
 
               array.push(obj);
