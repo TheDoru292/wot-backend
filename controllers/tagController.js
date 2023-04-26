@@ -11,7 +11,7 @@ exports.getPopular = (req, res, next) => {
         $sort: { number: -1 },
       },
       {
-        $limit: 5,
+        $limit: 3,
       },
     ],
     {},
