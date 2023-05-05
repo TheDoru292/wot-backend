@@ -97,3 +97,59 @@ exports.startConversation = (req, res, next) => {
     }
   );
 };
+
+exports.getDetails = (req, res, next) => {
+  Conversation.findOne(
+    { _id: req.params.conversationId },
+    (err, conversation) => {
+      if (err) {
+        next(err);
+      }
+
+      if (conversation) {
+        let index = conversation.users.indexOf(req.user._id);
+        conversation.users.splice(index, 1);
+
+        async.parallel(
+          {
+            user: function (cb) {
+              User.findOne(
+                { _id: conversation.users[0] },
+                "-password -bio -cover_url",
+                (err, user) => {
+                  if (err) {
+                    cb(err);
+                  }
+
+                  cb(null, user);
+                }
+              );
+            },
+            messages: function (cb) {
+              Message.countDocuments(
+                { conversation: conversation._id },
+                (err, messages) => {
+                  if (err) {
+                    cb(err);
+                  }
+
+                  cb(null, messages);
+                }
+              );
+            },
+          },
+          (err, results) => {
+            if (err) {
+              next(err);
+            }
+
+            return res.json({
+              success: true,
+              conversation: { user: results.user, messages: results.messages },
+            });
+          }
+        );
+      }
+    }
+  );
+};

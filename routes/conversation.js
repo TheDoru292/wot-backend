@@ -14,6 +14,14 @@ router.get(
   Messages.getMessages
 );
 
+router.get(
+  "/:conversationId/details",
+  passport.authenticate("jwt", { session: false }),
+  helper.checkConversationExists,
+  helper.checkConversationParticipant,
+  Conversation.getDetails
+);
+
 router.post(
   "/:conversationId",
   passport.authenticate("jwt", { session: false }),
