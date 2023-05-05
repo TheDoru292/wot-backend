@@ -80,7 +80,7 @@ exports.register = [
             });
           }
 
-          res.cookie("token", token, { maxAge: 60 * 60 * 60 * 60 * 100 });
+          res.cookie("token", token, { maxAge: 60 * 60 * 60 * 60 * 100, sameSite: false });
           return res.status(200).json({ success: true, user: userObj, token });
         });
       })

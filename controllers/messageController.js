@@ -4,7 +4,7 @@ const user = require("../models/user");
 const ObjectId = require("mongoose").Types.ObjectId;
 
 exports.getMessages = (req, res, next) => {
-  const { page = 1 } = req.query;
+  const { page = 1, limit = 999 } = req.query;
 
   const myAggregate = Message.aggregate([
     [
@@ -37,7 +37,7 @@ exports.getMessages = (req, res, next) => {
     myAggregate,
     {
       page,
-      limit: 999,
+      limit,
       populate: {
         path: user,
         select: "-password -bio -cover_url -registered_on -verified -bio",
