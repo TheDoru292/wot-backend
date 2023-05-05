@@ -11,6 +11,7 @@ const tweet = require("../models/tweet");
 const like = require("../models/like");
 const reply = require("../models/comment");
 const follow = require("../models/follow");
+const conversation = require("../models/conversation");
 
 exports.getAll = (req, res, next) => {
   User.find({}, "handle -_id", (err, users) => {
@@ -80,7 +81,10 @@ exports.register = [
             });
           }
 
-          res.cookie("token", token, { maxAge: 60 * 60 * 60 * 60 * 100, sameSite: false });
+          res.cookie("token", token, {
+            maxAge: 60 * 60 * 60 * 60 * 100,
+            sameSite: false,
+          });
           return res.status(200).json({ success: true, user: userObj, token });
         });
       })
@@ -214,6 +218,20 @@ exports.getProfile = (req, res, next) => {
           cb(null, null);
         }
       },
+      conversation: function (cb) {
+        if (req.user) {
+          conversation.findOne(
+            { users: { $all: [req.user._id, req.userId] } },
+            (err, conv) => {
+              if (err) {
+                cb(err);
+              }
+
+              cb(null, conv);
+            }
+          );
+        }
+      },
     },
     (err, results) => {
       if (err) {
@@ -227,6 +245,7 @@ exports.getProfile = (req, res, next) => {
         following: results.following,
         followers: results.followers,
         reqUserFollowing: results.userFollowing ? true : false,
+        conversation: results.conversation ? true : false,
         tweets: results.tweets,
         likes: results.likes,
         replies: results.replies,

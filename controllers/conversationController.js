@@ -50,13 +50,17 @@ exports.getUserConversations = (req, res, next) => {
                       cb(err);
                     }
 
-                    let editedMessage = message;
+                    if (message) {
+                      let editedMessage = message;
 
-                    if (message.deleted) {
-                      editedMessage.message = "";
+                      if (message.deleted) {
+                        editedMessage.message = "";
+                      }
+
+                      cb(null, editedMessage);
+                    } else {
+                      cb(null, null);
                     }
-
-                    cb(null, editedMessage);
                   });
               },
             },
@@ -68,6 +72,7 @@ exports.getUserConversations = (req, res, next) => {
               array.push({
                 users: [results.firstUser, results.secondUser],
                 latestMessage: results.latestMessage,
+                _id: conversation._id,
               });
               callback();
             }
