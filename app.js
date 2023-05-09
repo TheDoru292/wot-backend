@@ -16,7 +16,7 @@ app.set("port", port);
 const indexRouter = require("./routes/index");
 
 const corsOptions = {
-  origin: process.env.FRONTEND_ENV,
+  origin: process.env.FRONTEND_LINK,
   credentials: true,
   optionsSuccessStatus: 200,
 };
