@@ -65,6 +65,7 @@ const Messages = require("./models/message");
 Messages.watch().on("change", (data) => {
   if (data.operationType == "insert") {
     delete data.fullDocument.__v;
+    console.log(data.fullDocument);
     console.log(data.fullDocument.conversation.toString());
 
     io.to(data.fullDocument.conversation.toString()).emit(
