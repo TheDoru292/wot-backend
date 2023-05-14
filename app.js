@@ -45,7 +45,7 @@ app.use(function (err, req, res, next) {
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "http://localhost:3002", credentials: true },
+  cors: { origin: process.env.FRONTEND_LINK, credentials: true },
 });
 
 io.sockets.on("connection", (socket) => {
