@@ -142,8 +142,6 @@ exports.editProfile = [
 ];
 
 exports.getProfile = (req, res, next) => {
-  console.log("got past here");
-
   async.parallel(
     {
       profile: function (cb) {
@@ -232,10 +230,14 @@ exports.getProfile = (req, res, next) => {
               cb(null, conv);
             }
           );
+        } else {
+          cb(null, null);
         }
       },
     },
     (err, results) => {
+      console.log("doesn't reach this part");
+
       if (err) {
         const Error = new ErrorHandler(err, 500);
         return res.status(Error.errCode).json(Error.error);
