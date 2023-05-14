@@ -142,6 +142,8 @@ exports.editProfile = [
 ];
 
 exports.getProfile = (req, res, next) => {
+  console.log("got past here");
+
   async.parallel(
     {
       profile: function (cb) {
