@@ -63,6 +63,7 @@ io.sockets.on("connection", (socket) => {
 const Messages = require("./models/message");
 
 Messages.watch().on("change", (data) => {
+  console.log(data);
   if (data.operationType == "insert") {
     delete data.fullDocument.__v;
     console.log(data.fullDocument);
